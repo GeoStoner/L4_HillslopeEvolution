@@ -14,33 +14,29 @@ import numpy as np # importing math functions
 from numpy import *
 
 import matplotlib.pyplot as plt # importing plotting function
-plt.close()
 
 P0 = 0.0001 # soil prod. rate @ H=0, m/yr
-kappa = 0.05 # diffusivity, m**2/yr
+kappa = 0.1 # diffusivity, m**2/yr
 hstar = 0.5 # length scale of soil production, m
 denrck = 2700. # rock density, kg/m**3
 denreg = 2000. # regolith density, kg/m**3
-elow = 0.000001 # m, yr lowering rate of streams @ boundary condition
+elow = 0.02 # m,yr lowering rate of streams @ boundary condition
 
-xmax = 50 # boundaries
+xmax = 40 # boundaries
  # m
 dx = 1 # m
 N = int(((xmax*2)/dx)+1) # number of intervals
 
 x = linspace(-xmax,xmax,N)
 
-tmax = 5*10**7. # yr
+tmax = 10**7. # yr
 dt = 10**3 # yr
 
 t = arange(0,tmax,dt) # setting up time array
-Nplots = 100 # number of plots
-tplot = tmax/Nplots # interval between plots
 
 z = np.copy(x)
 z[0:len(z)/2] *= 3 # setting up initial slope
 z[len(z)/2:len(z)] *= -3
-z += 300 # m, just to make elevations positive
 H = 10*np.ones(len(z)) # regolith thickness, m
 b = z - H # basement, m
 
@@ -50,6 +46,7 @@ dzdx = diff(z)/dx # finding slope
 q = np.zeros(len(dzdx)) # 
 dqdx = np.zeros(len(dzdx-1)) # initial flux is 0
 
+plt.close()
 
 """
 Run
@@ -61,14 +58,11 @@ fig = plt.figure()
 
 line1, = plt.plot(x,z,label='initial state')
 
-for i in range(len(t)):
-    plt.ion()
-    
-    if (t[i+1] % tplot)==0: # clear plot, t[i+1] so it won't clear last plot
-        line2.remove()
+for index, i in enumerate(t):
     
     w = P0*np.exp(-H/hstar)
     b -= w*dt
+    
     
     dzdx = diff(z)/dx
     q = - kappa * dzdx
@@ -76,41 +70,18 @@ for i in range(len(t)):
     
     H[1:N-1] += (denrck/denreg)*w[1:N-1]*dt - (1/denreg)*dqdx*dt
     z = b + H 
-   
-    z[0] -= elow*dt*i 
+    z[0] -= elow*dt 
+    z[len(z)-1] -= elow*dt
     
-    z[len(z)-1] -= elow*dt*i
+line2, = plt.plot(x,z,label='final state') # plotting
+plt.xlabel('distance (m)')
+plt.ylabel('height (m)')
+plt.title('Evolution of hillslope over time')
+
+plt.legend(handles=[line1, line2])
+
+plt.show()
     
-    
-    
-    if (t[i] % tplot) == 0:
-        line2, = plt.plot(x,z,'r-',label='final state') # plotting
-        plt.xlabel('distance (m)')
-        plt.ylabel('height (m)')
-        plt.xlim((-xmax, xmax))
-        plt.ylim((0, 300))
-        
-        plt.title('Evolution of hillslope over time')
-        
-        
-        plt.legend(handles=[line1, line2])
-    
-        plt.pause(0.001)
-        plt.grid(True)
-        
-
-"""
-Close
-"""
-
-# Add the analytical solution to compare
-
-#z2 = (elow/2*kappa)*(xmax**2-x**2)-elow*dt*i
-#
-#plt.plot(x,z2,'g--')
-
-
-
     
     
     
